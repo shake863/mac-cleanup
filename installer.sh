@@ -8,7 +8,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
     cat <<EOF
-Installer of Mac Cleanup (https://github.com/fwartner/mac-cleanup)
+Installer of clean-zd (https://github.com/shake863/mac-cleanup)
 
 SYNOPSIS:
     $(basename "${BASH_SOURCE[0]}") [-h] [-v] install
@@ -48,17 +48,17 @@ die() {
 
 install() {
     msg "${BLUE}Download Mac Cleanup${NOFORMAT}"
-    curl -o mac-cleanup https://raw.githubusercontent.com/mac-cleanup/mac-cleanup-sh/main/mac-cleanup
+    curl -o clean-zd https://raw.githubusercontent.com/shake863/mac-cleanup/master/clean-zd
     msg "${BLUE}Init Mac Cleanup${NOFORMAT}"
-    chmod +x mac-cleanup
+    chmod +x clean-zd
     msg "${BLUE}Install Mac Cleanup${NOFORMAT}"
-    sudo mv mac-cleanup /usr/local/bin/mac-cleanup
+    sudo mv clean-zd /usr/local/bin/clean-zd
     msg "${GREEN}Done!${NOFORMAT}"
 }
 
 uninstall() {
     msg "${BLUE}Uninstall Mac Cleanup${NOFORMAT}"
-    sudo rm /usr/local/bin/mac-cleanup
+    sudo rm /usr/local/bin/clean-zd
     msg "${GREEN}Done!${NOFORMAT}"
 }
 
