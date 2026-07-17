@@ -14,8 +14,8 @@ usage() {
 	cat <<EOF
 Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-u]
 
-A Mac Cleaning up Utility by fwartner
-https://github.com/mac-cleanup/mac-cleanup-sh
+A Mac Cleaning up Utility (clean-zd)
+https://github.com/shake863/mac-cleanup
 
 Available options:
 
@@ -131,7 +131,7 @@ sudo -v
 
 HOST=$(whoami)
 
-# Keep-alive sudo until `mac-cleanup.sh` has finished
+# Keep-alive sudo until `clean-zd` has finished
 while true; do
 	sudo -n true
 	sleep 60
@@ -207,7 +207,7 @@ if type "xcrun" &>/dev/null; then
     xcrun simctl erase all &>/dev/null
   else
     collect_paths ~/Library/Developer/CoreSimulator/Devices/*/data/!(Library|var|tmp|Media)
-    collect_paths /Users/wah/Library/Developer/CoreSimulator/Devices/*/data/Library/!(PreferencesCaches|Caches|AddressBook)
+    collect_paths ~/Library/Developer/CoreSimulator/Devices/*/data/Library/!(PreferencesCaches|Caches|AddressBook)
     collect_paths ~/Library/Developer/CoreSimulator/Devices/*/data/Library/Caches/*
     collect_paths ~/Library/Developer/CoreSimulator/Devices/*/data/Library/AddressBook/AddressBook*
   fi
