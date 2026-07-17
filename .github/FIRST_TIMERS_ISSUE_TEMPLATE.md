@@ -14,20 +14,20 @@ Nothing. This issue is meant to welcome you to Open Source :) We are happy to wa
   Please 🙏 only claim if you want to start working on it within a day. We will select a person at random as the contributor the day after the issue is created.
   Once claimed we add you as contributor to this repository.
 - [ ] 👌 **Accept our invitation** to this repository. Once accepted, assign yourself to this repository
-- [ ] 👓 **Please review** our [Code of Conduct](https://github.com/fwartner/$REPO/blob/main/CODE_OF_CONDUCT.md)
+- [ ] 👓 **Please review** our [Code of Conduct](https://github.com/shake863/$REPO/blob/master/CODE_OF_CONDUCT.md)
   In a nutshell: be patient and actively kind with us 😊
 - [ ] 🔄 **replace** the `available` label with `in progress`.
-- [ ] 📝 **Update** the file [$FILENAME in the `fwartner/$REPO` repository]($BRANCH_URL) (press the little pen Icon) and edit the line as shown below.
+- [ ] 📝 **Update** the file [$FILENAME in the `shake863/$REPO` repository]($BRANCH_URL) (press the little pen Icon) and edit the line as shown below.
 
 ```diff
 $DIFF
 ```
 
-- [ ] 🔀 **Start a Pull Request**. Mention `closes fwartner/$REPO#THIS_ISSUE_NUMBER` in the description. There are two ways how you can start a pull request:
+- [ ] 🔀 **Start a Pull Request**. Mention `closes shake863/$REPO#THIS_ISSUE_NUMBER` in the description. There are two ways how you can start a pull request:
   1. If you are familiar with the terminal or would like to learn it, [here is a great tutorial](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github) on how to send a pull request using the terminal.
   2. You can [edit files directly in your browser](https://help.github.com/articles/editing-files-in-your-repository/)
 - [ ] 🏁 **Done** :+1: Replace the `in progress` label with `ready for review`. Ask in comments for a review :)
 
 ### 🤔❓ Questions
 
-Ping me on [Twitter](https://twitter.com/fwartner/)
+Ping me by [opening an issue](https://github.com/shake863/clean-zd/issues).
