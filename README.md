@@ -42,6 +42,9 @@
 * Deletes Kite logs
 * Clears Go module cache
 * Clears Poetry cache
+* Cleanup conda cache (clean-zd customization)
+* Cleanup pnpm store (clean-zd customization)
+* Remove Tencent Meeting logs (clean-zd customization)
 
 </details>
 

@@ -47,17 +47,17 @@ die() {
 }
 
 install() {
-    msg "${BLUE}Download Mac Cleanup${NOFORMAT}"
+    msg "${BLUE}Download clean-zd${NOFORMAT}"
     curl -o clean-zd https://raw.githubusercontent.com/shake863/mac-cleanup/master/clean-zd
-    msg "${BLUE}Init Mac Cleanup${NOFORMAT}"
+    msg "${BLUE}Init clean-zd${NOFORMAT}"
     chmod +x clean-zd
-    msg "${BLUE}Install Mac Cleanup${NOFORMAT}"
+    msg "${BLUE}Install clean-zd${NOFORMAT}"
     sudo mv clean-zd /usr/local/bin/clean-zd
     msg "${GREEN}Done!${NOFORMAT}"
 }
 
 uninstall() {
-    msg "${BLUE}Uninstall Mac Cleanup${NOFORMAT}"
+    msg "${BLUE}Uninstall clean-zd${NOFORMAT}"
     sudo rm /usr/local/bin/clean-zd
     msg "${GREEN}Done!${NOFORMAT}"
 }
