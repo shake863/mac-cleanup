@@ -73,6 +73,74 @@ def main(argv=None) -> int:
     import json as json_module
 
     args = build_parser().parse_args(argv)
+    if args.cmd == "scan":
+        from .scan import render_json, render_table, run_scan
+
+        cands = run_scan(
+            categories=args.category,
+            threshold_mb=args.threshold_mb,
+            dirs=args.dir,
+        )
+        print(
+            render_json(cands)
+            if args.json
+            else (render_table(cands) if cands else "没有新的候选清理项")
+        )
+        return 0
+    if args.cmd == "manifest":
+        from .config import (
+            ManifestEntry,
+            ignore_add,
+            load_ignore,
+            load_manifest,
+            manifest_add,
+            manifest_remove,
+        )
+        from .safety import SafetyError
+
+        if args.mcmd == "add":
+            try:
+                manifest_add(
+                    ManifestEntry(
+                        path=args.path,
+                        strategy=args.strategy,
+                        risk=args.risk,
+                        type=args.type,
+                        reason=args.reason,
+                        decided_by=args.decided_by,
+                    )
+                )
+            except SafetyError as err:
+                print(f"拒绝写入: {err}", file=sys.stderr)
+                return 1
+            print(f"已登记: {args.path}")
+            return 0
+        if args.mcmd == "remove":
+            ok = manifest_remove(args.path)
+            print("已移除" if ok else "清单中不存在该条目")
+            return 0 if ok else 1
+        if args.mcmd == "ignore":
+            ignore_add(args.path, args.reason, args.decided_by)
+            print(f"已加入忽略名单: {args.path}")
+            return 0
+        if args.mcmd == "list":
+            import dataclasses
+
+            data = {
+                "manifest": [dataclasses.asdict(e) for e in load_manifest()],
+                "ignore": load_ignore(),
+            }
+            if args.json:
+                print(json_module.dumps(data, ensure_ascii=False, indent=2))
+            else:
+                for entry in data["manifest"]:
+                    print(
+                        f"[清单] {entry['path']}  {entry['strategy']}/{entry['risk']}  "
+                        f"by {entry['decided_by']}  {entry['reason']}"
+                    )
+                for item in data["ignore"]:
+                    print(f"[忽略] {item['path']}  {item['reason']}")
+            return 0
     if args.cmd == "status":
         from .status import status_text
 
