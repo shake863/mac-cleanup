@@ -14,8 +14,8 @@ usage() {
 	cat <<EOF
 Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-u]
 
-A Mac Cleaning up Utility by fwartner
-https://github.com/mac-cleanup/mac-cleanup-sh
+A Mac Cleaning up Utility (clean-zd)
+https://github.com/shake863/mac-cleanup
 
 Available options:
 
@@ -131,7 +131,7 @@ sudo -v
 
 HOST=$(whoami)
 
-# Keep-alive sudo until `mac-cleanup.sh` has finished
+# Keep-alive sudo until `clean-zd` has finished
 while true; do
 	sudo -n true
 	sleep 60
@@ -207,7 +207,7 @@ if type "xcrun" &>/dev/null; then
     xcrun simctl erase all &>/dev/null
   else
     collect_paths ~/Library/Developer/CoreSimulator/Devices/*/data/!(Library|var|tmp|Media)
-    collect_paths /Users/wah/Library/Developer/CoreSimulator/Devices/*/data/Library/!(PreferencesCaches|Caches|AddressBook)
+    collect_paths ~/Library/Developer/CoreSimulator/Devices/*/data/Library/!(PreferencesCaches|Caches|AddressBook)
     collect_paths ~/Library/Developer/CoreSimulator/Devices/*/data/Library/Caches/*
     collect_paths ~/Library/Developer/CoreSimulator/Devices/*/data/Library/AddressBook/AddressBook*
   fi
@@ -312,37 +312,40 @@ if [ -d ~/.gradle ]; then
   remove_paths
 fi
 
-# clean conda cache
-#清理未安装的包缓存
-conda clean --all
-#清理 tarballs 缓存
-conda clean --tarballs
-conda clean --index-cache
-
-# Removes unreferenced (extraneous, orphan) packages from the store
-pnpm store prune
+# clean conda cache（pnpm 缓存由下方带 dry-run 守卫的 pnpm 块统一处理）
+if type "conda" &>/dev/null; then
+  if [ -z "$dry_run" ]; then
+    msg 'Cleaning up conda cache...'
+    conda clean --all --yes &>/dev/null      # 未安装的包缓存
+    conda clean --tarballs --yes &>/dev/null # tarballs 缓存
+    conda clean --index-cache --yes &>/dev/null
+  fi
+fi
 
 # 清理 ~/Library/Containers
 
 #com.tencent.meeting/Data/Library/Global/Logs
 if [ -d ~/Library/Containers/com.tencent.meeting/Data/Library/Global/Logs ]; then
+  collect_paths ~/Library/Containers/com.tencent.meeting/Data/Library/Global/Logs/*
   msg 'clean log in com.tencent.meeting'
-  rm -rf ~/Library/Containers/com.tencent.meeting/Data/Library/Global/Logs/*
+  remove_paths
 fi
 
 # 清理 ~/Library/Developer/
 if [ -d ~/Library/Developer/Xcode ]; then
+  collect_paths ~/Library/Developer/Xcode/DocumentationCache/*
+  collect_paths ~/Library/Developer/Xcode/watchOS\ DeviceSupport/*
+  collect_paths ~/Library/Developer/Xcode/UserData/IB\ Support/Simulator\ Devices/*
+  collect_paths ~/Library/Developer/CoreSimulator/Devices/*
   msg 'clean Xcode Cache'
-  rm -rf ~/Library/Developer/Xcode/DocumentationCache/* &>/dev/null
-  rm -rf ~/Library/Developer/Xcode/watchOS\ DeviceSupport/* &>/dev/null
-  rm -rf ~/Library/Developer/Xcode/UserData/IB\ Support/Simulator\ Devices/* &>/dev/null
-  rm -rf ~/Library/Developer/CoreSimulator/Devices/* &>/dev/null
+  remove_paths
 fi
 
 # 清理 Library/Application Support/Caches
 if [ -d ~/Library/Application\ Support/Caches ]; then
+  collect_paths ~/Library/Application\ Support/Caches/*
   msg 'clean Application Support/Caches'
-  rm -rf ~/Library/Application\ Support/Caches/*  &>/dev/null
+  remove_paths
 fi
 
 
