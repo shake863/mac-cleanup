@@ -22,3 +22,10 @@ class RulesDataTest(unittest.TestCase):
         prules, crules, _ = load_rules()
         for r in prules + crules:
             self.assertIn(r.risk, ("recommend", "caution"), r.id)
+
+    def test_minecraft_cef_log_covered(self):
+        """回归:legacy Bash 收集 launcher_cef_log.txt,T10 对照发现原 rules.json 遗漏。"""
+        prules, _crules, _ = load_rules()
+        target = "~/Library/Application Support/minecraft/launcher_cef_log.txt"
+        found = any(target in r.paths for r in prules)
+        self.assertTrue(found, f"规则库未覆盖 legacy 的 {target}")
