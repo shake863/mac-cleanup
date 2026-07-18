@@ -113,3 +113,50 @@ class CleanTest(unittest.TestCase):
         items, _commands, warnings = clean.collect_items(rules_path=self.rules)
         self.assertEqual(items, [])
         self.assertTrue(any("[safety]" in warning for warning in warnings))
+
+
+class IgnoreAndDedupTest(unittest.TestCase):
+    def setUp(self):
+        self.cfg = tempfile.mkdtemp()
+        os.environ["CLEAN_ZD_CONFIG_DIR"] = self.cfg
+        self.work = Path.home() / f".cleanzd-igdedup-test-{os.getpid()}"
+        self.work.mkdir(exist_ok=True)
+        self.rules_path = Path(self.cfg) / "rules.json"
+        self.rules_path.write_text(json.dumps({
+            "version": 1,
+            "path_rules": [{"id": "t-work", "title": "t", "tips": "",
+                            "strategy": "empty-dir", "paths": [str(self.work)]}],
+            "command_rules": [], "aliases": {},
+        }))
+
+    def tearDown(self):
+        os.environ.pop("CLEAN_ZD_CONFIG_DIR", None)
+        import shutil
+        shutil.rmtree(self.work, ignore_errors=True)
+
+    def test_clean_respects_ignore(self):
+        victim = self.work / "igdir"
+        victim.mkdir()
+        (victim / "f").write_bytes(b"x" * 10)
+        config.ignore_add(str(victim), "用户说不清", "user")
+        items, _cmds, warns = clean.collect_items(rules_path=self.rules_path)
+        self.assertEqual([i for i in items if str(i.path) == str(victim)], [])
+        self.assertTrue(any("忽略名单" in w for w in warns))
+
+    def test_ignore_covers_children(self):
+        victim = self.work / "igdir2"
+        sub = victim / "sub"
+        sub.mkdir(parents=True)
+        config.ignore_add(str(victim), "整个目录都不清", "user")
+        items, _cmds, _warns = clean.collect_items(rules_path=self.rules_path)
+        self.assertEqual([i for i in items if str(i.path).startswith(str(victim))], [])
+
+    def test_rule_manifest_dedup(self):
+        victim = self.work / "dupdir"
+        victim.mkdir()
+        (victim / "f").write_bytes(b"x" * 10)
+        config.manifest_add(ManifestEntry(path=str(victim), strategy="empty-dir"))
+        items, _cmds, _warns = clean.collect_items(rules_path=self.rules_path)
+        paths = [str(i.path) for i in items]
+        self.assertEqual(paths.count(str(victim)), 1)
+        self.assertNotIn(str(victim / "f"), paths)

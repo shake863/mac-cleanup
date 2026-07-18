@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from .config import load_manifest, save_manifest
+from .config import load_ignore, load_manifest, save_manifest
 from .paths import config_dir, expand, human, path_size
 from .rules import CommandRule, load_rules, rule_targets
 from .safety import SafetyError, validate_target
@@ -28,11 +28,30 @@ def collect_items(
 ) -> tuple[list[CleanItem], list[CommandRule], list[str]]:
     items: list[CleanItem] = []
     warnings: list[str] = []
+    ignored = [str(expand(entry["path"])) for entry in load_ignore()]
+    taken: set[str] = set()
+
+    def _is_ignored(path: Path) -> bool:
+        s = str(path)
+        return any(s == ig or s.startswith(ig + "/") for ig in ignored)
+
+    def _take(item: CleanItem) -> None:
+        s = str(item.path)
+        if s in taken:
+            return
+        if any(str(parent) in taken for parent in item.path.parents):
+            return
+        taken.add(s)
+        items.append(item)
+
     path_rules, command_rules, _aliases = load_rules(rules_path)
     for rule in path_rules:
         if rule.risk == "caution" and not include_caution:
             continue
         for target in rule_targets(rule):
+            if _is_ignored(target):
+                warnings.append(f"[ignore] 跳过 {target}(忽略名单,规则 {rule.id})")
+                continue
             try:
                 validate_target(target)
             except SafetyError as error:
@@ -40,7 +59,7 @@ def collect_items(
                     f"[safety] 跳过 {target}(规则 {rule.id}): {error}"
                 )
                 continue
-            items.append(
+            _take(
                 CleanItem(
                     f"rule:{rule.id}",
                     target,
@@ -61,7 +80,7 @@ def collect_items(
             continue
         if entry.strategy == "empty-dir" and path.is_dir():
             for child in sorted(path.iterdir()):
-                items.append(
+                _take(
                     CleanItem(
                         "manifest",
                         child,
@@ -71,7 +90,7 @@ def collect_items(
                     )
                 )
         else:
-            items.append(
+            _take(
                 CleanItem(
                     "manifest",
                     path,
