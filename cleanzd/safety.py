@@ -30,6 +30,20 @@ SAFETY_GLOBS = (
     "~/Library/Application Support/Steam/steamapps/common*",
 )
 
+# §1.1 中这些名称也可能出现在 darwin per-app SystemTempDir。
+# 按路径组件匹配同一批关键缓存名，避免把保护绑定到单一目录位置。
+SAFETY_COMPONENT_GLOBS = (
+    "com.apple.dock*",
+    "com.apple.appstore*",
+    "com.apple.FontRegistry*",
+    "com.apple.LaunchServices-*",
+    "com.apple.IconServices*",
+    "com.apple.Spotlight*",
+    "Desktop Pictures*",
+    "ColorSync*",
+    "com.apple.preference.desktopscreeneffect.desktop*",
+)
+
 SAFETY_SUBSTRINGS = (
     "Logic Pro",
     "com.apple.logic",
@@ -47,6 +61,10 @@ def safety_hit(path: Path) -> str | None:
     for pattern in SAFETY_GLOBS:
         if fnmatch.fnmatch(value, str(expand(pattern))):
             return pattern
+    for component in path.parts:
+        for pattern in SAFETY_COMPONENT_GLOBS:
+            if fnmatch.fnmatch(component, pattern):
+                return f"**/{pattern}"
     for substring in SAFETY_SUBSTRINGS:
         if substring in value:
             return substring

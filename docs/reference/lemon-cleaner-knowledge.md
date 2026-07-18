@@ -31,6 +31,8 @@
 | `~/Library/Caches/com.apple.preference.desktopscreeneffect.desktop/` | 屏保设置 |
 | `/.DocumentRevisions-V100/` | 系统文件版本库(lemon 标 recommend=NO 的 soft 类型,实质极危险) |
 
+> `com.apple.dock*`、`com.apple.appstore*`、`com.apple.FontRegistry*`、`com.apple.LaunchServices-*`、`com.apple.IconServices*`、`com.apple.Spotlight*` 等系统关键名称也可能出现在 darwin per-app SystemTempDir(`/private/var/folders/.../C/`)。clean-zd 的 safety 防线按路径组件名称统一保护,不只匹配 `~/Library/Caches` 下的位置。
+
 ### 1.2 应用数据混在缓存目录(清了丢用户数据)
 
 | 路径/模式 | 原因 |

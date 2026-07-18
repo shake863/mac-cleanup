@@ -19,6 +19,21 @@ class SafetyHitTest(unittest.TestCase):
         path = Path.home() / "Library/Caches/com.tencent.xinWeChat"
         self.assertIsNone(safety_hit(path))
 
+    def test_system_temp_critical_cache_hit(self):
+        cache_dir = Path("/private/var/folders/aa/hash/C")
+        names = (
+            "com.apple.dock.extra",
+            "com.apple.FontRegistry",
+            "com.apple.Spotlight",
+        )
+        for name in names:
+            with self.subTest(name=name):
+                self.assertIsNotNone(safety_hit(cache_dir / name))
+
+    def test_normal_system_temp_cache_no_hit(self):
+        path = Path("/private/var/folders/aa/hash/C/com.tencent.xinWeChat")
+        self.assertIsNone(safety_hit(path))
+
 
 class ValidateTest(unittest.TestCase):
     def setUp(self):
