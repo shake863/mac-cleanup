@@ -8,7 +8,7 @@
   "agents": {
     "claude": {
       "role": "chief_architect",
-      "last_active": "2026-07-19T00:05:57+08:00"
+      "last_active": "2026-07-19T00:33:05+08:00"
     },
     "codex": {
       "role": "deputy_architect_and_lead_developer",
@@ -127,6 +127,15 @@
       "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_12.md"
+    },
+    {
+      "id": "task_20260719_01",
+      "title": "修复 clean 不认 ignore 名单 + rule/manifest 目标重复计数",
+      "assigned_to": "claude",
+      "type": "dev",
+      "status": "done",
+      "retry_count": 0,
+      "file": "tasks/task_20260719_01.md"
     }
   ]
 }
