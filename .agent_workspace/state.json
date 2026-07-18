@@ -12,11 +12,11 @@
     },
     "codex": {
       "role": "deputy_architect_and_lead_developer",
-      "last_active": null
+      "last_active": "2026-07-18T22:23:38+08:00"
     },
     "trae": {
       "role": "feature_developer",
-      "last_active": null
+      "last_active": "2026-07-18T22:38:24+08:00"
     }
   },
   "tasks": [
@@ -25,7 +25,7 @@
       "title": "T1 引擎骨架:包结构+CLI分发+paths工具",
       "assigned_to": "codex",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_01.md"
     },
@@ -34,7 +34,7 @@
       "title": "T2 safety 安全模块(排除名单+硬校验)",
       "assigned_to": "codex",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_02.md"
     },
@@ -43,7 +43,7 @@
       "title": "T3 config 本机清单存取",
       "assigned_to": "trae",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_03.md"
     },
@@ -52,7 +52,7 @@
       "title": "T4 rules 规则引擎",
       "assigned_to": "codex",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_04.md"
     },
@@ -61,7 +61,7 @@
       "title": "T5 rules.json 规则库数据",
       "assigned_to": "trae",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_05.md"
     },
