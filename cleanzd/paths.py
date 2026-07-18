@@ -39,12 +39,20 @@ def path_size(path: Path) -> int:
         if not path.is_dir():
             return 0
         total = 0
+        # 硬链接共享同一 inode(如 conda 包文件),按 (st_dev, st_ino) 去重只计一次,与 du 一致
+        seen_inodes = set()
         for root, _dirs, files in os.walk(path, onerror=lambda _error: None):
             for name in files:
                 try:
-                    total += _physical_size(os.lstat(os.path.join(root, name)))
+                    stat = os.lstat(os.path.join(root, name))
                 except OSError:
-                    pass
+                    continue
+                if stat.st_nlink > 1:
+                    key = (stat.st_dev, stat.st_ino)
+                    if key in seen_inodes:
+                        continue
+                    seen_inodes.add(key)
+                total += _physical_size(stat)
         return total
     except OSError:
         return 0

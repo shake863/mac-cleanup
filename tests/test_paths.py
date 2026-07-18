@@ -60,5 +60,15 @@ class PathSizeTest(unittest.TestCase):
         self.assertEqual(paths.path_size(sparse), _physical(sparse))
         self.assertLess(paths.path_size(sparse), 1024 * 1024)
 
+    def test_hardlinked_file_counted_once(self):
+        tmp = Path(tempfile.mkdtemp())
+        original = tmp / "pkg" / "data.bin"
+        original.parent.mkdir()
+        original.write_bytes(b"x" * 4096)
+        (tmp / "env").mkdir()
+        os.link(original, tmp / "env" / "data.bin")
+        os.link(original, tmp / "data.bin")
+        self.assertEqual(paths.path_size(tmp), _physical(original))
+
     def test_missing_path_is_zero(self):
         self.assertEqual(paths.path_size(Path("/nonexistent/xyz")), 0)
