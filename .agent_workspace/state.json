@@ -1,14 +1,14 @@
 {
   "project": "mac-cleanup",
   "lock": {
-    "holder": "claude",
-    "since": "2026-07-19T01:44:02+08:00",
+    "holder": null,
+    "since": null,
     "note": "防呆提示用。holder 非空表示上一个 Agent 可能未收尾,启动的 Agent 应提醒人类确认,而非拒绝工作。"
   },
   "agents": {
     "claude": {
       "role": "chief_architect",
-      "last_active": "2026-07-19T01:44:02+08:00"
+      "last_active": "2026-07-19T02:18:27+08:00"
     },
     "codex": {
       "role": "deputy_architect_and_lead_developer",
@@ -142,7 +142,7 @@
       "title": "磁盘占比分析(analyze)方案评审:V1 设计→V2 反馈",
       "assigned_to": "claude",
       "type": "review_architecture",
-      "status": "working",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260719_02.md"
     }
