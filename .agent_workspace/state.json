@@ -8,15 +8,15 @@
   "agents": {
     "claude": {
       "role": "chief_architect",
-      "last_active": "2026-07-18T22:11:25+08:00"
+      "last_active": "2026-07-19T00:05:57+08:00"
     },
     "codex": {
       "role": "deputy_architect_and_lead_developer",
-      "last_active": "2026-07-18T22:23:38+08:00"
+      "last_active": "2026-07-18T23:53:30+08:00"
     },
     "trae": {
       "role": "feature_developer",
-      "last_active": "2026-07-18T22:38:24+08:00"
+      "last_active": "2026-07-18T23:44:17+08:00"
     }
   },
   "tasks": [
@@ -62,7 +62,7 @@
       "assigned_to": "trae",
       "type": "dev",
       "status": "done",
-      "retry_count": 0,
+      "retry_count": 1,
       "file": "tasks/task_20260718_05.md"
     },
     {
@@ -70,7 +70,7 @@
       "title": "T6 clean 执行器与 status",
       "assigned_to": "codex",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_06.md"
     },
@@ -79,7 +79,7 @@
       "title": "T7 scan 编排/渲染与 manifest 子命令接线",
       "assigned_to": "trae",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_07.md"
     },
@@ -88,7 +88,7 @@
       "title": "T8 cache/system/bigfile 三个扫描器",
       "assigned_to": "trae",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_08.md"
     },
@@ -97,7 +97,7 @@
       "title": "T9 dev/leftover 扫描器(残留匹配算法)",
       "assigned_to": "codex",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_09.md"
     },
@@ -106,7 +106,7 @@
       "title": "T10 Bash 对比验证、退役与文档切换",
       "assigned_to": "codex",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_10.md"
     },
@@ -115,9 +115,18 @@
       "title": "T11 market-zd skill 薄壳(zd-mac-clean)",
       "assigned_to": "claude",
       "type": "dev",
-      "status": "pending",
+      "status": "done",
       "retry_count": 0,
       "file": "tasks/task_20260718_11.md"
+    },
+    {
+      "id": "task_20260718_12",
+      "title": "修复 SystemTempDir 系统关键缓存 safety 盲区",
+      "assigned_to": "codex",
+      "type": "bugfix",
+      "status": "done",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_12.md"
     }
   ]
 }
