@@ -21,6 +21,14 @@ def build_parser() -> argparse.ArgumentParser:
     scan_parser.add_argument("--threshold-mb", type=int, default=500)
     scan_parser.add_argument("--dir", action="append")
 
+    analyze_parser = sub.add_parser(
+        "analyze", help="只读展开目录一层,分析各子项体积占比与定性"
+    )
+    analyze_parser.add_argument("dir", nargs="?", default="~")
+    analyze_parser.add_argument("--json", action="store_true")
+    analyze_parser.add_argument("--top", type=int, default=20)
+    analyze_parser.add_argument("--min-size", type=int, default=10, metavar="MB")
+
     manifest_parser = sub.add_parser("manifest", help="本机清单管理")
     manifest_sub = manifest_parser.add_subparsers(dest="mcmd", required=True)
     manifest_add = manifest_sub.add_parser("add", help="登记可清条目(写入前安全校验)")
@@ -86,6 +94,18 @@ def main(argv=None) -> int:
             if args.json
             else (render_table(cands) if cands else "没有新的候选清理项")
         )
+        return 0
+    if args.cmd == "analyze":
+        from .analyze import AnalyzeError, render_json, render_table, run_analyze
+
+        try:
+            report = run_analyze(
+                args.dir, top=args.top, min_size_mb=args.min_size
+            )
+        except AnalyzeError as err:
+            print(f"无法分析: {err}", file=sys.stderr)
+            return 1
+        print(render_json(report) if args.json else render_table(report))
         return 0
     if args.cmd == "manifest":
         from .config import (
