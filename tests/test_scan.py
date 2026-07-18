@@ -34,3 +34,29 @@ class RunScanTest(unittest.TestCase):
 
     def test_empty_categories_ok(self):
         self.assertEqual(run_scan(categories=[]), [])
+
+class CacheScannerTest(unittest.TestCase):
+    def test_scan_roots_reports_dirs_over_1mb(self):
+        from cleanzd.scan import cache
+        tmp = Path(tempfile.mkdtemp())
+        big = tmp / "com.example.app"
+        big.mkdir()
+        (big / "blob").write_bytes(b"x" * (2 * 1024 * 1024))
+        small = tmp / "tiny.app.cache"
+        small.mkdir()
+        (small / "blob").write_bytes(b"x" * 10)
+        out = cache._scan_roots([str(tmp)], "测试来源")
+        self.assertEqual([c.path for c in out], [str(big)])
+        self.assertEqual(out[0].category, "cache")
+        self.assertEqual(out[0].suggested_strategy, "empty-dir")
+
+class BigfileScannerTest(unittest.TestCase):
+    def test_threshold(self):
+        from cleanzd.scan import bigfile
+        tmp = Path(tempfile.mkdtemp())
+        (tmp / "big.dmg").write_bytes(b"x" * (2 * 1024 * 1024))
+        (tmp / "small.txt").write_bytes(b"x" * 10)
+        out = bigfile._scan([str(tmp)], 1 * 1024 * 1024)
+        self.assertEqual([Path(c.path).name for c in out], ["big.dmg"])
+        self.assertEqual(out[0].risk, "caution")
+        self.assertIn("天前", out[0].evidence)
