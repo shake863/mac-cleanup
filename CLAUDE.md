@@ -56,7 +56,11 @@ At start the script records `oldAvailable` from `df /`; at the end it diffs agai
 
 Pushing a git tag triggers `.github/workflows/release.yml`, which bumps the Homebrew formula in `shake863/homebrew-tap` (the tap repo must be created separately for this to work). No manual release steps.
 
+## Dev-log
+
+每次完成一项开发任务时,在 `docs/dev-log/YYYY-MM-DD-<主题>.md` 新建一份 dev-log,随代码一起提交。用中文写,涵盖:背景/目标、改动内容、验证方式、遗留/后续、相关文档或提交。以 `docs/dev-log/2026-07-18-rebrand-clean-zd.md` 为格式参考。目的是让每次改动可追踪。
+
 ## Notes for editing
 
 - This is a detached fork of `mac-cleanup/mac-cleanup-sh` (upstream is inactive; no further syncing). All install/reference URLs point at `shake863/mac-cleanup` on the `master` branch. Only the Credits/CHANGELOG retain upstream links for attribution.
-- The script contains customizations not in upstream (e.g. a `conda clean` block, `pnpm store prune`, and Tencent Meeting / extra Xcode / Application Support cache cleanups around lines 315–346) that run unconditionally rather than following the guarded collect/remove pattern.
+- The script contains customizations not in upstream (`conda clean`, Tencent Meeting / extra Xcode / Application Support cache cleanups around lines 315–346). These now follow the guarded collect/remove pattern (or a `type`+`dry_run` guard for command-based tools like conda) — keep it that way; `-d` dry-run must stay non-destructive.
