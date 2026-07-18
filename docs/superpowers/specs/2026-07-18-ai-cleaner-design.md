@@ -41,7 +41,7 @@ Bash 无法良好承载结构化 JSON 输出、清单状态管理与安全校验
 
 五类候选来源:
 
-1. **缓存/日志**:`~/Library/Caches/*`、`~/Library/Logs/*`、`~/Library/Application Support/*/Cache(s)`,以及沙盒应用的容器内缓存 `~/Library/Containers/<bundleID>/Data/Library/Caches`(App Store / 沙盒应用如微信的缓存大头在此,参考 lemon-cleaner 的 appstore 规则),按体积排序;
+1. **缓存/日志**:`~/Library/Caches/*`、`~/Library/Logs/*`、`~/Library/Application Support/*/Cache(s)`、沙盒应用容器内缓存 `~/Library/Containers/<bundleID>/Data/Library/Caches`(App Store / 沙盒应用如微信的缓存大头在此),以及 darwin per-app 临时缓存目录 `$(getconf DARWIN_USER_CACHE_DIR)/<bundleID>`(即 `/private/var/folders/.../C/`,lemon-cleaner 的 SystemTempDir),按体积排序;
 2. **开发产物**:Xcode DerivedData/模拟器/Device Support、Docker、npm/pip/go/conda 等缓存中 rules.json 未覆盖的部分;
 3. **卸载残留**:在 `/Library` 与 `~/Library` 两级的 Application Support、Caches、Preferences、Saved Application State、Logs、Containers、LaunchAgents、LaunchDaemons、StartupItems、CrashReporter、DiagnosticReports、WebKit 下寻找「孤儿」目录(目录集参考 lemon-cleaner LMSearchPath)。匹配算法(参考 lemon-cleaner Uninstaller):
    - **已装应用身份集**:遍历 `/Applications`(及 `~/Applications`),用 stdlib `plistlib` 读各 app `Info.plist`,取 bundleID、appName、executableName、显示名四元组构建存在集;
@@ -91,7 +91,9 @@ Bash 无法良好承载结构化 JSON 输出、清单状态管理与安全校验
 
 ### safety 排除名单(引擎内硬编码,非用户可改文件)
 
-参考 lemon-cleaner exclude 名单手工提炼(不整体搬运其 GPL XML):`com.apple.dock`、`com.apple.FontRegistry`、`com.apple.LaunchServices-*`、`com.apple.IconServices`、`com.apple.appstoreagent`(清除会导致 App Store 待更新列表异常)、1Password、Logic Pro 相关、浏览器 profile 目录等。作用于两处:scan 永不出候选;manifest add 永拒写入。
+lemon-cleaner 历史积累的规则知识已系统提炼为 [docs/reference/lemon-cleaner-knowledge.md](../../reference/lemon-cleaner-knowledge.md)(安全排除名单及原因、条件规则模式、清理项知识表、机制性知识,含落地对照表)。safety 名单以该文档 §1.1/§1.2 为种子手工编写(不搬运其 GPL XML):系统关键缓存(dock、FontRegistry、LaunchServices、IconServices、appstoreagent 等)与「应用数据混在缓存目录」类(Logic Pro、1Password、游戏存档等)。作用于两处:scan 永不出候选;manifest add 永拒写入。
+
+**rules.json 初始内容的三个种子来源**:① 现 Bash 脚本清理块转译;② lemon-cleaner 知识提炼文档(§3 清理项知识表,含风险标记、浏览器「只清 Cache 子目录」等经验);③ 上线后 AI/用户迭代沉淀。
 
 ### `manifest.json` / `ignore.json`(`~/.config/clean-zd/`,本机专属,不进 git)
 
