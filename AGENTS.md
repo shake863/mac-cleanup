@@ -73,4 +73,4 @@ When translating or changing rules, compare against the retired Bash behavior do
 - Do not broaden safety or leftover heuristics without evidence, tests, and documentation.
 - Older specs and plans remain historical records; do not rewrite them merely because the implementation has advanced.
 
-本项目启用多智能体黑板协作(multi-ai)。你是 codex,启动时必须先读取并遵循 `.agent_workspace/roles/codex.md`。
+本项目启用多智能体黑板协作(multi-ai)。你是 codex,启动时必须先读取并遵循 `~/github/market-zd/plugins/zd-multi-ai/skills/multi-ai/assets/roles/codex.md`。
