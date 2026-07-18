@@ -41,9 +41,15 @@ Bash 无法良好承载结构化 JSON 输出、清单状态管理与安全校验
 
 五类候选来源:
 
-1. **缓存/日志**:`~/Library/Caches/*`、`~/Library/Logs/*`、`~/Library/Application Support/*/Cache(s)`,按体积排序;
-2. **开发产物**:Xcode DerivedData/模拟器/Device Support、Docker、npm/pip/go/conda 等缓存中 rules.json 未覆盖的部分(项目目录下陈旧 node_modules 首版不含,列为后续迭代);
-3. **卸载残留**:对比 `/Applications` 已装应用,在 `/Library` 与 `~/Library` 两级的 Application Support、Caches、Preferences、Saved Application State、Logs、Containers、LaunchAgents、LaunchDaemons、StartupItems、CrashReporter、DiagnosticReports、WebKit 下寻找「孤儿」目录(目录集参考 lemon-cleaner LMSearchPath);判断保守,仅列候选;
+1. **缓存/日志**:`~/Library/Caches/*`、`~/Library/Logs/*`、`~/Library/Application Support/*/Cache(s)`,以及沙盒应用的容器内缓存 `~/Library/Containers/<bundleID>/Data/Library/Caches`(App Store / 沙盒应用如微信的缓存大头在此,参考 lemon-cleaner 的 appstore 规则),按体积排序;
+2. **开发产物**:Xcode DerivedData/模拟器/Device Support、Docker、npm/pip/go/conda 等缓存中 rules.json 未覆盖的部分;
+3. **卸载残留**:在 `/Library` 与 `~/Library` 两级的 Application Support、Caches、Preferences、Saved Application State、Logs、Containers、LaunchAgents、LaunchDaemons、StartupItems、CrashReporter、DiagnosticReports、WebKit 下寻找「孤儿」目录(目录集参考 lemon-cleaner LMSearchPath)。匹配算法(参考 lemon-cleaner Uninstaller):
+   - **已装应用身份集**:遍历 `/Applications`(及 `~/Applications`),用 stdlib `plistlib` 读各 app `Info.plist`,取 bundleID、appName、executableName、显示名四元组构建存在集;
+   - **孤儿判定**:候选目录名与存在集做 bundleID 精确/前缀匹配 + 名称小写前缀匹配,均不命中才判为孤儿候选;
+   - **厂商前缀保护**(防误报关键):如 `com.tencent.xxx` 残留,若机器仍装有其他 `com.tencent.*` 应用,不判定为孤儿;
+   - **别名映射**:App 名与数据目录名不一致的特例(如有道词典 ↔ `com.youdao.YoudaoDict`)维护在 rules.json 的 `aliases` 段;
+   - **pkgutil 收据**:`pkgutil --pkgs` 识别 pkg 安装的软件,首版仅用于候选项的证据展示;
+   - 判断保守,仅列候选,永不自动判定;
 4. **大文件发现**:默认扫 `~/Downloads` 与 `~/Desktop`,阈值默认 500MB,目录与阈值可参数调整;
 5. **系统项**:垃圾箱、Mail Downloads、旧 iOS 备份的体积报告(风险分级一律 `caution`)。
 
@@ -74,10 +80,14 @@ Bash 无法良好承载结构化 JSON 输出、清单状态管理与安全校验
 
 现 Bash 脚本所有硬编码清理块转译为规则条目,两种类型:
 
-- **`path` 型**:路径 + 策略(`empty-dir` 清空目录保留目录 / `delete` 删除路径本身)+ guard 条件(目录存在才生效);
-- **`command` 型**:工具原生清理命令(`brew cleanup`、`docker system prune`、`npm cache clean`、`conda clean` 等),带 `type` 检测 guard。
+- **`path` 型**:字段 `id / title(人读名) / tips(为什么可清,同时喂给 AI 与用户展示) / risk(recommend|caution) / paths[] / match(文件名 glob 或正则,可选) / exclude[](条目级排除路径/模式,可选) / min_size(可选) / older_than_days(可选) / depth(扫描深度:0=路径本身,1=一层子项,-1=递归,默认 1) / strategy(empty-dir 清空目录保留目录 | delete 删除路径本身)`。schema 参考 lemon-cleaner 规则库的表达能力(大小/时间/名称条件、深度控制、条目级排除),但用扁平字段,不引入其 filter 编号引用与表达式代数;
+- **`command` 型**:`id / title / tips / command(工具原生清理命令,如 brew cleanup、docker system prune、npm cache clean、conda clean)/ guard(type 检测)`。
+
+另有 **`aliases` 段**:App 名与数据目录名不一致的映射特例,供 leftover 扫描使用。
 
 转译时按 lemon-cleaner 的 Xcode 清理项(DerivedData、iOS/macOS Device Support、Archives、Device Logs、DocumentationCache、Simulator、Simulator Runtimes)核对补全现有覆盖。
+
+明确不吸收 lemon-cleaner 的:filter 表达式引擎(编号引用 + 代数组合,可维护性差)、无用语言文件清理(风险高收益低)、微信媒体分类深度定制(待清单迭代机制成熟后自然演进)。
 
 ### safety 排除名单(引擎内硬编码,非用户可改文件)
 
@@ -104,6 +114,12 @@ SKILL.md 只写工作流与判断准则,不含实现逻辑:
 
 - Bash `clean-zd`、`installer.sh` 退役删除;README、安装方式、Homebrew tap / release workflow 改为 Python 版。退役动作在转译完成且 dry-run 对比验证通过后执行;
 - 交付形态:装引擎(mac-cleanup)+ 在 Claude Code 装 skill(market-zd),即得完整 AI 清理助手;引擎单独可人工使用(scan 表格输出 + 手动 manifest add)。
+
+## 后续迭代(首版不含)
+
+- 项目目录(如 `~/github`)下陈旧 `node_modules` 扫描;
+- **体积缓存**:`~/.config/clean-zd/sizecache.json` 缓存目录体积、按 mtime 失效,加速重复扫描(参考 lemon-cleaner QMScanFileSizeCacheManager);
+- pkgutil 收据的完整残留清单(首版仅作证据展示)。
 
 ## 验证
 
