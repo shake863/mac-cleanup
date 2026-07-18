@@ -92,11 +92,16 @@ def rule_targets(rule: PathRule) -> list[Path]:
     depth = rule.effective_depth()
     targets: list[Path] = []
     for base in _bases(rule):
-        if depth == 0 or not base.is_dir():
-            candidates = [base]
-        elif depth == 1:
-            candidates = sorted(base.iterdir())
-        else:
-            candidates = sorted(path for path in base.rglob("*") if not path.is_dir())
+        try:
+            if depth == 0 or not base.is_dir():
+                candidates = [base]
+            elif depth == 1:
+                candidates = sorted(base.iterdir())
+            else:
+                candidates = sorted(
+                    path for path in base.rglob("*") if not path.is_dir()
+                )
+        except OSError:
+            continue
         targets += [path for path in candidates if _keep(rule, path)]
     return targets

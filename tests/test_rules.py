@@ -5,6 +5,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from cleanzd.rules import PathRule, rule_targets
 
@@ -82,3 +83,8 @@ class RuleTargetsTest(unittest.TestCase):
     def test_missing_base_yields_nothing(self):
         rule = self.rule(paths=["/nonexistent/xyz"], strategy="delete")
         self.assertEqual(rule_targets(rule), [])
+
+    def test_unreadable_base_yields_nothing(self):
+        rule = self.rule(strategy="empty-dir")
+        with mock.patch.object(Path, "iterdir", side_effect=PermissionError):
+            self.assertEqual(rule_targets(rule), [])
