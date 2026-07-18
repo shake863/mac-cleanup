@@ -70,9 +70,47 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
+    import json as json_module
+
     args = build_parser().parse_args(argv)
     if args.cmd == "status":
-        print("clean-zd v2 引擎骨架就绪(status 将在后续任务实现)")
+        from .status import status_text
+
+        print(status_text())
+        return 0
+    if args.cmd == "clean":
+        from .clean import run_clean
+
+        report = run_clean(
+            dry_run=args.dry_run,
+            purge=args.purge,
+            include_caution=args.include_caution,
+        )
+        if args.json:
+            print(
+                json_module.dumps(
+                    report,
+                    ensure_ascii=False,
+                    indent=2,
+                    default=str,
+                )
+            )
+        else:
+            for warning in report["warnings"]:
+                print(warning, file=sys.stderr)
+            if report["dry_run"]:
+                print(
+                    f"[dry-run] 可清理 {report['items']} 项,"
+                    f"预计释放 {report['total_human']};"
+                    f"另有命令规则: {', '.join(report['commands']) or '无'}"
+                )
+            else:
+                print(
+                    f"已清理 {report['items']} 项,释放 {report['freed_human']};"
+                    f"错误 {len(report['errors'])} 个"
+                )
+                for error in report["errors"]:
+                    print(f"  ! {error}", file=sys.stderr)
         return 0
     print(f"子命令 {args.cmd} 尚未实现", file=sys.stderr)
     return 1
