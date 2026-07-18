@@ -1,147 +1,117 @@
 # clean-zd
 
-### A cleanup script for macOS
+AI 驱动的 Mac 清理助手引擎。它负责确定性扫描、清单管理和安全清理；AI 负责判断候选项，但永远不能绕过引擎直接删除文件。
 
-</br>
+## 特点
 
-<details>
-  <summary>
-  What does script do?
-  </summary>
+- Python 3.9+，仅使用标准库，无第三方运行时依赖。
+- `scan → manifest → clean → status` 完整闭环。
+- 默认移入废纸篓；只有显式 `--purge` 才直接删除。
+- `risk=caution` 默认跳过；只有显式 `--include-caution` 才纳入。
+- 硬编码 safety 排除名单、家目录边界和软链逃逸校验。
+- 内置通用 `rules.json`，本机决定保存在 `~/.config/clean-zd/`。
 
-</br>
+## 安装
 
-* Empty the Trash on All Mounted Volumes and the Main HDD
-* Clear System Log Files
-* Clear Adobe Cache Files
-* Cleanup iOS Applications
-* Remove iOS Device Backups
-* Cleanup Xcode Derived Data and Archives
-* Reset iOS simulators
-* Cleanup Homebrew Cache
-* Cleanup Any Old Versions of Gems
-* Cleanup Dangling Docker Images
-* Purge Inactive Memory
-* Cleanup pip cache
-* Cleanup Pyenv-VirtualEnv Cache
-* Cleanup npm Cache
-* Cleanup Yarn Cache
-* Cleanup Docker Images and Stopped Containers
-* Cleanup CocoaPods Cache Files
-* Cleanup composer cache
-* Cleanup Dropbox cache
-* Remove PhpStorm logs
-* Remove Minecraft logs and cache
-* Remove Steam logs and cache
-* Remove Lunar Client logs and cache
-* Remove Microsoft Teams logs and cache
-* Remove Wget logs and hosts
-* Removes Cacher logs
-* Deletes Android caches
-* Clears Gradle caches
-* Deletes Kite logs
-* Clears Go module cache
-* Clears Poetry cache
-* Cleanup conda cache (clean-zd customization)
-* Cleanup pnpm store (clean-zd customization)
-* Remove Tencent Meeting logs (clean-zd customization)
-
-</details>
-
-
-
-## Install Automatically
-
-### Using homebrew
-
-> 需先自建 `shake863/homebrew-tap` 仓库后此方式才生效。
+克隆仓库后可以直接运行：
 
 ```bash
-brew tap shake863/tap
-brew install shake863/tap/clean-zd
+git clone https://github.com/shake863/mac-cleanup.git
+cd mac-cleanup
+./clean-zd --help
 ```
-<details>
-  <summary>
-  Error: SHA256 mismatch
-  </summary>
 
-> If you'll see ```Error: SHA256 mismatch``` try this:
-> 1. Copy "Actual" hash from error
-> 2. Run ```brew edit shake863/tap/clean-zd```
-> 3. Press ```I``` and change ```sha256 "<some hash>"``` with hash from step 1
-> 4. Press ```:```, then ```wq``` and ```Enter```
-> 5. Re-run installation \
-> ```brew install shake863/tap/clean-zd```
-
-</details>
-
-
-### Using curl
+也可以建立全局命令软链：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shake863/mac-cleanup/master/installer.sh | bash -s install
+ln -s "$PWD/clean-zd" /usr/local/bin/clean-zd
 ```
 
-### Using wget
+如果 `/usr/local/bin` 不可写，请为 `ln` 增加 `sudo`，或链接到你自己的 `PATH` 目录。
+
+## 使用
+
+### 1. 扫描候选
+
+扫描只读，永不删除：
 
 ```bash
-wget https://raw.githubusercontent.com/shake863/mac-cleanup/master/installer.sh -O - | bash -s install
+./clean-zd scan
+./clean-zd scan --category cache --category dev
+./clean-zd scan --json
 ```
 
-## Step by Step Install
+支持类别：`cache`、`dev`、`leftover`、`bigfile`、`system`。卸载残留和系统项只作为候选，需人工或 AI 复核。
 
-1. Download: `curl -o clean-zd https://raw.githubusercontent.com/shake863/mac-cleanup/master/clean-zd`
-2. Make it executable: `chmod +x clean-zd`
-3. Move to make it globally usable: `sudo mv clean-zd /usr/local/bin/clean-zd`
-
-## Update
-
-### Using curl
+### 2. 管理本机清单
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/shake863/mac-cleanup/master/installer.sh" | bash -s update
+./clean-zd manifest add ~/Library/Caches/example \
+  --strategy empty-dir \
+  --reason "可再生缓存"
+
+./clean-zd manifest ignore ~/Library/Caches/keep-me \
+  --reason "需要保留"
+
+./clean-zd manifest list
 ```
 
-### Using wget
+`manifest add` 会执行硬安全校验；根目录、家目录本身、家目录外路径、裸 glob、软链逃逸和 safety 名单目标都会被拒绝。
+
+### 3. 预览与清理
+
+始终先运行 dry-run：
 
 ```bash
-wget "https://raw.githubusercontent.com/shake863/mac-cleanup/master/installer.sh" -O - | bash -s update
+./clean-zd clean --dry-run
+./clean-zd clean --dry-run --include-caution
 ```
 
-## Uninstall
-
-### Using curl
+确认后执行清理：
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/shake863/mac-cleanup/master/installer.sh" | bash -s uninstall
+./clean-zd clean
 ```
 
-### Using wget
+默认把文件移入 `~/.Trash`。只有明确不需要恢复时才使用：
 
 ```bash
-wget "https://raw.githubusercontent.com/shake863/mac-cleanup/master/installer.sh" -O - | bash -s uninstall
+./clean-zd clean --purge
 ```
 
-## Usage Options
+### 4. 查看状态
 
-Help menu:
-
+```bash
+./clean-zd status
 ```
-$ clean-zd -h
 
-A Mac Cleaning up Utility (clean-zd)
-https://github.com/shake863/mac-cleanup
+状态包含 manifest/ignore 数量、上次清理和累计释放空间。
 
-USAGE:
- clean-zd [FLAGS]
+## 与 AI skill 配合
 
-FLAGS:
--h, --help       Prints help menu
--d, --dry-run    Print approx space to be cleaned
--v, --verbose    Print script debug info
--u, --update     Run brew update
+完整工作流由 AI skill 驱动：
+
+1. 调用 `clean-zd scan --json` 获取新候选。
+2. AI 对可再生缓存给出判断和理由；删除类及 `caution` 项必须询问用户。
+3. 将结论写入 manifest 或 ignore。
+4. 展示 `clean --dry-run` 结果，用户确认后才调用 `clean`。
+5. 有普适价值的本机结论再沉淀到仓库 `rules.json`。
+
+安全边界始终不变：AI 只能写清单，真正删除只能发生在 `clean-zd clean` 内部。
+
+## 开发与测试
+
+```bash
+python3 -m unittest discover -s tests -v
+./clean-zd status
+./clean-zd scan --category cache
+./clean-zd clean --dry-run
 ```
+
+设计与实施文档位于 `docs/superpowers/`，规则知识来源见 `docs/reference/lemon-cleaner-knowledge.md`。
 
 ## Credits
 
-本项目 fork 自 [mac-cleanup/mac-cleanup-sh](https://github.com/mac-cleanup/mac-cleanup-sh)，在其基础上做了个人定制（conda / pnpm / 腾讯会议缓存清理等）。感谢原作者及所有贡献者。
+本项目最初 fork 自 [mac-cleanup/mac-cleanup-sh](https://github.com/mac-cleanup/mac-cleanup-sh)，感谢原作者及所有贡献者。
+
+安全排除、条件规则和扫描机制参考并人工提炼自 [Tencent/lemon-cleaner](https://github.com/Tencent/lemon-cleaner) 的公开知识；未复制其 GPL 规则实现。

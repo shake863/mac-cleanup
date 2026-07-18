@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json, os, tempfile, unittest
 from pathlib import Path
+from unittest import mock
 from cleanzd.scan import Candidate, render_json, render_table, run_scan, _admit
 
 class AdmitTest(unittest.TestCase):
@@ -60,3 +61,10 @@ class BigfileScannerTest(unittest.TestCase):
         self.assertEqual([Path(c.path).name for c in out], ["big.dmg"])
         self.assertEqual(out[0].risk, "caution")
         self.assertIn("天前", out[0].evidence)
+
+    def test_unreadable_root_is_skipped(self):
+        from cleanzd.scan import bigfile
+
+        tmp = Path(tempfile.mkdtemp())
+        with mock.patch.object(Path, "iterdir", side_effect=PermissionError):
+            self.assertEqual(bigfile._scan([str(tmp)], 1), [])

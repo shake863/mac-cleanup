@@ -4,57 +4,62 @@ This file provides guidance to AI coding assistants (Claude Code, Codex, etc.) w
 
 ## What this is
 
-A single-file macOS cleanup utility written in Bash. This is a personal fork of [mac-cleanup/mac-cleanup-sh](https://github.com/mac-cleanup/mac-cleanup-sh), rebranded as `clean-zd`. The entire tool lives in the `clean-zd` script (~500 lines). `installer.sh` handles download/install/uninstall. There is no build system, no dependencies, and no test suite.
+`clean-zd` is a Python 3.9+ macOS cleanup engine with no third-party runtime dependencies. It was originally forked from [mac-cleanup/mac-cleanup-sh](https://github.com/mac-cleanup/mac-cleanup-sh), but the legacy Bash implementation is retired. The current product is an AI-driven scan/manifest/clean/status workflow with a deterministic, safety-guarded execution layer.
 
 ## Running & testing
 
 ```bash
-./clean-zd            # run the cleanup for real (prompts for sudo)
-./clean-zd -d         # dry-run: estimate reclaimable space, then prompt to continue
-./clean-zd -v         # verbose (set -x) debug output
-./clean-zd -u         # also run `brew update`/`brew upgrade`
-./clean-zd -h         # help
+python3 -m unittest discover -s tests -v  # full test suite
+./clean-zd status                         # manifest/history summary
+./clean-zd scan                           # read-only candidate scan
+./clean-zd scan --json                    # structured output for AI
+./clean-zd clean --dry-run                # non-destructive estimate
+./clean-zd clean --dry-run --include-caution
 ```
 
-There are no automated tests — validate changes by running with `-d` (dry-run) first, which is non-destructive. Use `shellcheck clean-zd` to lint (the script already carries `# shellcheck disable` directives).
+Tests must never touch real user data. Set `CLEAN_ZD_CONFIG_DIR` to a temporary directory for config tests and build all test file trees under temporary paths. Real verification may run `scan` and `clean --dry-run`; never run a real clean merely as a test.
 
 ## Architecture
 
-The script has two execution paths controlled by the `dry_run` variable, and understanding this dual-path design is essential — nearly every cleanup block branches on it:
+The product has three layers:
 
-- **Real run** (`dry_run` unset): paths are deleted and CLI cache commands (`brew cleanup`, `npm cache clean`, `docker system prune`, etc.) are executed.
-- **Dry-run** (`-d`): paths are only *collected*, their size summed via `count_dry`, reported through `bytesToHuman`, and then the script re-`exec`s itself without `-d` if the user confirms.
+- **Execution layer** (`cleanzd/`): deterministic Python CLI; contains no AI.
+- **Knowledge layer** (`cleanzd/rules.json` plus `~/.config/clean-zd/`): built-in rules, local manifest, ignore list, and history.
+- **Intelligence layer** (external skill): asks the engine to scan, reasons about candidates, records decisions, and requests user confirmation before cleaning.
 
-### Core helper functions (defined at top of `clean-zd`)
+Key modules:
 
-- `collect_paths <path...>` — appends to the global `path_list` array. This is the primary mechanism: you register paths, then act on them.
-- `remove_paths` — deletes everything in `path_list` (only when not a dry-run), then unsets the array.
-- `count_dry` — sums sizes of `path_list` entries into `dry_results` (dry-run accounting).
-- `bytesToHuman` — formats byte counts; message wording changes based on whether it's a dry-run.
-- `msg` / `die` — logging; `msg` suppresses output during dry-run.
-- `deleteCaches` — an older standalone helper (largely superseded by the collect/remove pattern).
+- `cleanzd/__main__.py`: argparse CLI dispatch for `scan`, `manifest`, `clean`, and `status`.
+- `cleanzd/paths.py`: config directory, path expansion, size accounting, human-readable sizes.
+- `cleanzd/safety.py`: hardcoded exclusions and `validate_target`; this is a security boundary.
+- `cleanzd/config.py`: manifest and ignore persistence.
+- `cleanzd/rules.py` / `cleanzd/rules.json`: rule models, loading, and target evaluation.
+- `cleanzd/clean.py`: dry-run, Trash-first disposal, command rules, history, and manifest lifecycle.
+- `cleanzd/scan/`: candidate orchestration and category scanners.
+- `tests/`: stdlib `unittest` coverage.
 
-### The standard cleanup block pattern
+## Safety invariants
 
-Most cleanups follow this shape and this is the pattern to replicate when adding new ones:
+- AI never deletes files directly. It may only write manifest/ignore decisions through the CLI.
+- The engine never deletes outside `$HOME`.
+- Reject roots, `$HOME` itself, missing paths, bare globs, safety-list hits, and symlink escapes.
+- Re-run `validate_target` immediately before accepting a manifest or rule target for cleanup.
+- Default disposal moves targets to `~/.Trash`; `--purge` is the only direct-delete path.
+- `risk=caution` is skipped unless `--include-caution` is explicit.
+- Scans are read-only and leftovers are always conservative `caution` candidates.
+- Permission-denied paths must be skipped without aborting an entire scan or dry-run.
 
-```bash
-if [ -d ~/Some/App/Cache ]; then      # guard: only if the target exists
-  collect_paths ~/Some/App/Cache/*    # register paths
-  msg 'Clearing Some App cache...'    # user-facing message
-  remove_paths                        # delete (respects dry-run)
-fi
-```
+Changes to safety behavior require a failing regression test first and must stay grounded in `docs/reference/lemon-cleaner-knowledge.md`.
 
-For tools with their own cache-clearing command, branch on `dry_run` explicitly: run the command in the real path, and `collect_paths` the cache directory in the dry-run path (see the `npm`/`yarn`/`go`/`composer` blocks).
+## Rules schema
 
-### Space accounting
+`rules.json` contains:
 
-At start the script records `oldAvailable` from `df /`; at the end it diffs against `newAvailable` to report actual space freed. Dry-run instead relies on the `dry_results` sum.
+- **Path rules**: `id`, `title`, `tips`, `risk`, `strategy`, `paths`; optional `depth`, `match`, `exclude`, `min_size`, `older_than_days`.
+- **Command rules**: `id`, `title`, `tips`, `command`, `guard`; optional `risk`, `dry_paths`.
+- **Aliases**: installed bundle IDs mapped to data-directory names for conservative leftover matching.
 
-## Release process
-
-Pushing a git tag triggers `.github/workflows/release.yml`, which bumps the Homebrew formula in `shake863/homebrew-tap` (the tap repo must be created separately for this to work). No manual release steps.
+When translating or changing rules, compare against the retired Bash behavior documented in `docs/dev-log/2026-07-18-v2-python-rewrite.md` and the lemon knowledge reference. Add a rule-data regression test for every omission found during comparison.
 
 ## Dev-log
 
@@ -62,7 +67,10 @@ Pushing a git tag triggers `.github/workflows/release.yml`, which bumps the Home
 
 ## Notes for editing
 
-- This is a detached fork of `mac-cleanup/mac-cleanup-sh` (upstream is inactive; no further syncing). All install/reference URLs point at `shake863/mac-cleanup` on the `master` branch. Only the Credits/CHANGELOG retain upstream links for attribution.
-- The script contains customizations not in upstream (`conda clean`, Tencent Meeting / extra Xcode / Application Support cache cleanups around lines 315–346). These now follow the guarded collect/remove pattern (or a `type`+`dry_run` guard for command-based tools like conda) — keep it that way; `-d` dry-run must stay non-destructive.
+- Python modules must remain standard-library only and compatible with Python 3.9. Use `from __future__ import annotations` when modern annotations require it.
+- User-visible CLI output is Chinese.
+- Preserve the separation between deterministic execution, JSON knowledge, and external AI workflow.
+- Do not broaden safety or leftover heuristics without evidence, tests, and documentation.
+- Older specs and plans remain historical records; do not rewrite them merely because the implementation has advanced.
 
 本项目启用多智能体黑板协作(multi-ai)。你是 codex,启动时必须先读取并遵循 `.agent_workspace/roles/codex.md`。

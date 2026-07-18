@@ -12,7 +12,11 @@ def _scan(roots: list[str], thr: int) -> list[Candidate]:
         base = Path(root)
         if not base.is_dir():
             continue
-        for child in sorted(base.iterdir()):
+        try:
+            children = sorted(base.iterdir())
+        except OSError:
+            continue
+        for child in children:
             size = path_size(child)
             if size < thr:
                 continue
