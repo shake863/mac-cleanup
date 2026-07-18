@@ -1,0 +1,112 @@
+# clean-zd AI 清理助手设计(v2)
+
+日期:2026-07-18
+状态:已确认
+取代:[2026-07-18-scan-manifest-design.md](2026-07-18-scan-manifest-design.md)(v1,Bash 扫描-清单方案,未实施即被本设计取代)
+
+## 背景与目标
+
+v1 设计在 Bash 脚本上加「扫描 → 确认 → 记录 → 复用」机制。讨论后目标升级:在传统格式化清理的基础上,打造 **AI 驱动的 Mac 清理助手**,最终以 skill 形式交付给 AI(Claude Code)驱动;AI 能自主判断的项直接给结论,判断不清的项交互式与用户讨论。
+
+角色分工:
+
+- **AI(经 skill)是判断者**:多数候选项(已知 app 缓存、开发产物)AI 可直接判断并给出理由;
+- **用户是最终仲裁者**:仅 AI 拿不准的项通过 AskUserQuestion 交互确认;
+- **工具是确定性执行者**:扫描、记录、删除是结构化输入输出的程序,自身无 AI。
+
+Bash 无法良好承载结构化 JSON 输出、清单状态管理与安全校验,故执行层改用 Python(stdlib-only,零第三方依赖,依赖系统 python3)。
+
+## 总体架构(三层)
+
+```
+智能层  skill(market-zd 仓库,薄壳)
+        工作流:扫描→AI逐项判断(给理由)→拿不准的问用户→写清单→dry-run→确认→清理→沉淀规则
+                    │ 调用 CLI、读写 JSON
+知识层  数据(~/.config/clean-zd/ 本机 + 仓库内规则库)
+        rules.json(仓库,内置通用规则)   manifest.json / ignore.json(本机)
+        safety 排除名单(内置于引擎,硬编码)
+执行层  Python CLI(mac-cleanup 仓库,stdlib-only,自身无 AI)
+        clean-zd scan / manifest / clean / status
+```
+
+**安全铁律:AI 永远不直接删文件。** AI 只能通过 `manifest add` 写清单条目,写入时引擎硬校验;删除只发生在 `clean-zd clean` 内部,受硬编码守卫约束。AI 判断可以错,爆炸半径被执行层封顶。
+
+## 执行层:Python CLI
+
+单入口 `clean-zd`(python3 脚本),子命令:
+
+### `clean-zd scan [--category cache|dev|leftover|bigfile|system] [--json]`
+
+只读扫描,永不删除。输出候选项列表(`--json` 供 AI,默认表格供人),每项含:路径、体积、类别、证据(如「对应 app 不存在」「90 天未访问」)、风险分级(`recommend` / `caution`)、建议策略。已在 manifest / ignore / safety 名单中的路径不出现——每次扫描只出现新面孔,形成迭代闭环。
+
+五类候选来源:
+
+1. **缓存/日志**:`~/Library/Caches/*`、`~/Library/Logs/*`、`~/Library/Application Support/*/Cache(s)`,按体积排序;
+2. **开发产物**:Xcode DerivedData/模拟器/Device Support、Docker、npm/pip/go/conda 等缓存中 rules.json 未覆盖的部分(项目目录下陈旧 node_modules 首版不含,列为后续迭代);
+3. **卸载残留**:对比 `/Applications` 已装应用,在 `/Library` 与 `~/Library` 两级的 Application Support、Caches、Preferences、Saved Application State、Logs、Containers、LaunchAgents、LaunchDaemons、StartupItems、CrashReporter、DiagnosticReports、WebKit 下寻找「孤儿」目录(目录集参考 lemon-cleaner LMSearchPath);判断保守,仅列候选;
+4. **大文件发现**:默认扫 `~/Downloads` 与 `~/Desktop`,阈值默认 500MB,目录与阈值可参数调整;
+5. **系统项**:垃圾箱、Mail Downloads、旧 iOS 备份的体积报告(风险分级一律 `caution`)。
+
+### `clean-zd manifest add/remove/list`
+
+清单管理。`add` 时安全校验,不过即拒绝写入:
+
+- 路径实际存在且位于 `$HOME` 内(垃圾箱等少数系统项走白名单例外);
+- 不在 safety 排除名单;
+- 拒绝空路径、根路径、`$HOME` 本身、裸 glob、经软链逃逸出 `$HOME` 的路径。
+
+### `clean-zd clean [--dry-run] [--purge]`
+
+统一执行 rules.json(通用规则)+ manifest.json(本机清单)。
+
+- `--dry-run`:只统计各项体积与总计,非破坏;command 型规则只报告将执行的命令;
+- 默认真删走废纸篓优先(移入 Trash),`--purge` 才直接 rm;
+- `delete` 策略条目清理成功后自动从 manifest 移除;`empty-dir` 条目长期保留复用;
+- 执行前对每条再次跑安全校验,校验不过跳过并警告,不中断整体。
+
+### `clean-zd status`
+
+清单概况、上次清理时间、累计释放空间。
+
+## 知识层:数据
+
+### `rules.json`(仓库内,随版本发布)
+
+现 Bash 脚本所有硬编码清理块转译为规则条目,两种类型:
+
+- **`path` 型**:路径 + 策略(`empty-dir` 清空目录保留目录 / `delete` 删除路径本身)+ guard 条件(目录存在才生效);
+- **`command` 型**:工具原生清理命令(`brew cleanup`、`docker system prune`、`npm cache clean`、`conda clean` 等),带 `type` 检测 guard。
+
+转译时按 lemon-cleaner 的 Xcode 清理项(DerivedData、iOS/macOS Device Support、Archives、Device Logs、DocumentationCache、Simulator、Simulator Runtimes)核对补全现有覆盖。
+
+### safety 排除名单(引擎内硬编码,非用户可改文件)
+
+参考 lemon-cleaner exclude 名单手工提炼(不整体搬运其 GPL XML):`com.apple.dock`、`com.apple.FontRegistry`、`com.apple.LaunchServices-*`、`com.apple.IconServices`、`com.apple.appstoreagent`(清除会导致 App Store 待更新列表异常)、1Password、Logic Pro 相关、浏览器 profile 目录等。作用于两处:scan 永不出候选;manifest add 永拒写入。
+
+### `manifest.json` / `ignore.json`(`~/.config/clean-zd/`,本机专属,不进 git)
+
+字段:`path`、`type`(候选类别)、`strategy`、`risk`、`reason`(AI 或用户的判断理由)、`decided_by`(`ai` / `user`)、`added`(日期)。`ignore.json` 记「确认不清」,供扫描过滤。
+
+## 智能层:skill(market-zd 仓库,`plugins/<name>/` 结构,薄壳)
+
+SKILL.md 只写工作流与判断准则,不含实现逻辑:
+
+1. `clean-zd scan --json` 获取候选;
+2. AI 逐项判断:认识的直接给结论 + 理由(如「微信缓存,可清,会重新生成」);
+3. 拿不准的(未知目录、大文件、疑似残留)→ AskUserQuestion 问用户,附上下文(体积/最后修改时间/归属推测);
+4. 结论写入 manifest / ignore(带 reason、decided_by);
+5. `clean --dry-run` 向用户展示预计释放空间 → 用户确认 → `clean`;
+6. **沉淀闭环**:发现有普适价值的规则,提示用户将其提交进 mac-cleanup 仓库 rules.json——个人清单是试验田,规则库是沉淀层。
+
+判断准则(写入 skill):缓存/日志等可再生项 AI 可自主判断;删除类(不可再生文件)必须问用户;凡 `risk=caution` 一律问用户。
+
+## 存量处置与交付
+
+- Bash `clean-zd`、`installer.sh` 退役删除;README、安装方式、Homebrew tap / release workflow 改为 Python 版。退役动作在转译完成且 dry-run 对比验证通过后执行;
+- 交付形态:装引擎(mac-cleanup)+ 在 Claude Code 装 skill(market-zd),即得完整 AI 清理助手;引擎单独可人工使用(scan 表格输出 + 手动 manifest add)。
+
+## 验证
+
+- 引擎:stdlib `unittest` 覆盖安全校验、规则解析、dry-run 统计;`scan` 只读可直接真跑;`clean --dry-run` 输出与旧 Bash `clean-zd -d` 对比,校验规则转译完整性;
+- 人工构造非法 manifest 条目(根路径、$HOME 外、safety 名单内)验证「拒写入 + 执行时跳过并警告」;
+- skill:本机真实走一遍完整工作流(扫描→判断→问询→清单→dry-run→清理)。
