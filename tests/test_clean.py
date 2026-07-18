@@ -38,20 +38,22 @@ class CleanTest(unittest.TestCase):
         victim = self.work / "cache"
         victim.mkdir()
         (victim / "f").write_bytes(b"x" * 1000)
+        expected = os.lstat(victim / "f").st_blocks * 512
         config.manifest_add(ManifestEntry(path=str(victim), strategy="delete"))
         report = clean.run_clean(dry_run=True, rules_path=self.rules)
         self.assertTrue(report["dry_run"])
-        self.assertEqual(report["total_bytes"], 1000)
+        self.assertEqual(report["total_bytes"], expected)
         self.assertTrue(victim.exists())
 
     def test_real_clean_purge_removes_and_drops_delete_entry(self):
         victim = self.work / "onetime"
         victim.mkdir()
         (victim / "f").write_bytes(b"x" * 10)
+        expected = os.lstat(victim / "f").st_blocks * 512
         config.manifest_add(ManifestEntry(path=str(victim), strategy="delete"))
         report = clean.run_clean(dry_run=False, purge=True, rules_path=self.rules)
         self.assertFalse(victim.exists())
-        self.assertEqual(report["freed_bytes"], 10)
+        self.assertEqual(report["freed_bytes"], expected)
         self.assertEqual(config.load_manifest(), [])
 
     def test_empty_dir_keeps_dir_and_entry(self):

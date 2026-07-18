@@ -174,7 +174,10 @@ class RunAnalyzeTest(unittest.TestCase):
         report = run_analyze(str(root), top=1, min_size_mb=1, home=home)
         self.assertEqual(len(report["items"]), 1)
         self.assertEqual(report["omitted"]["count"], 2)
-        self.assertEqual(report["total"], 5 * 1024 * 1024 + 1024)
+        expected = sum(
+            os.lstat(root / sub / "blob").st_blocks * 512 for sub in ("a", "b", "c")
+        )
+        self.assertEqual(report["total"], expected)
 
     def test_rejects_outside_home(self):
         home = _make_home()
