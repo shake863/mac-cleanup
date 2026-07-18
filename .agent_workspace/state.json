@@ -1,0 +1,123 @@
+{
+  "project": "mac-cleanup",
+  "lock": {
+    "holder": null,
+    "since": null,
+    "note": "防呆提示用。holder 非空表示上一个 Agent 可能未收尾,启动的 Agent 应提醒人类确认,而非拒绝工作。"
+  },
+  "agents": {
+    "claude": {
+      "role": "chief_architect",
+      "last_active": "2026-07-18T22:11:25+08:00"
+    },
+    "codex": {
+      "role": "deputy_architect_and_lead_developer",
+      "last_active": null
+    },
+    "trae": {
+      "role": "feature_developer",
+      "last_active": null
+    }
+  },
+  "tasks": [
+    {
+      "id": "task_20260718_01",
+      "title": "T1 引擎骨架:包结构+CLI分发+paths工具",
+      "assigned_to": "codex",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_01.md"
+    },
+    {
+      "id": "task_20260718_02",
+      "title": "T2 safety 安全模块(排除名单+硬校验)",
+      "assigned_to": "codex",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_02.md"
+    },
+    {
+      "id": "task_20260718_03",
+      "title": "T3 config 本机清单存取",
+      "assigned_to": "trae",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_03.md"
+    },
+    {
+      "id": "task_20260718_04",
+      "title": "T4 rules 规则引擎",
+      "assigned_to": "codex",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_04.md"
+    },
+    {
+      "id": "task_20260718_05",
+      "title": "T5 rules.json 规则库数据",
+      "assigned_to": "trae",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_05.md"
+    },
+    {
+      "id": "task_20260718_06",
+      "title": "T6 clean 执行器与 status",
+      "assigned_to": "codex",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_06.md"
+    },
+    {
+      "id": "task_20260718_07",
+      "title": "T7 scan 编排/渲染与 manifest 子命令接线",
+      "assigned_to": "trae",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_07.md"
+    },
+    {
+      "id": "task_20260718_08",
+      "title": "T8 cache/system/bigfile 三个扫描器",
+      "assigned_to": "trae",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_08.md"
+    },
+    {
+      "id": "task_20260718_09",
+      "title": "T9 dev/leftover 扫描器(残留匹配算法)",
+      "assigned_to": "codex",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_09.md"
+    },
+    {
+      "id": "task_20260718_10",
+      "title": "T10 Bash 对比验证、退役与文档切换",
+      "assigned_to": "codex",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_10.md"
+    },
+    {
+      "id": "task_20260718_11",
+      "title": "T11 market-zd skill 薄壳(zd-mac-clean)",
+      "assigned_to": "claude",
+      "type": "dev",
+      "status": "pending",
+      "retry_count": 0,
+      "file": "tasks/task_20260718_11.md"
+    }
+  ]
+}

@@ -64,3 +64,5 @@ Pushing a git tag triggers `.github/workflows/release.yml`, which bumps the Home
 
 - This is a detached fork of `mac-cleanup/mac-cleanup-sh` (upstream is inactive; no further syncing). All install/reference URLs point at `shake863/mac-cleanup` on the `master` branch. Only the Credits/CHANGELOG retain upstream links for attribution.
 - The script contains customizations not in upstream (`conda clean`, Tencent Meeting / extra Xcode / Application Support cache cleanups around lines 315–346). These now follow the guarded collect/remove pattern (or a `type`+`dry_run` guard for command-based tools like conda) — keep it that way; `-d` dry-run must stay non-destructive.
+
+本项目启用多智能体黑板协作(multi-ai)。你是 codex,启动时必须先读取并遵循 `.agent_workspace/roles/codex.md`。

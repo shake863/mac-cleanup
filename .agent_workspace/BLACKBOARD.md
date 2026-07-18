@@ -1,0 +1,76 @@
+# 共享黑板协作约定（BLACKBOARD）
+
+本文件是《多智能体协同开发约定（共享黑板模式）》的**执行层母本**——三个 Agent（Claude Code / Codex / Trae CN）的自举配置均引用本文件。任何 Agent 在参与协作前应通读本文。
+
+## 1. 你所处的协作网络
+
+你是一个异构多智能体协作网络的成员。网络里有三个 Agent，由**人类逐个手动启动**，通过项目根目录下的 `.agent_workspace/`（共享黑板）交换一切信息：
+
+| Agent | 角色 | 职责倾向 |
+|---|---|---|
+| `claude`（Claude Code） | 总架构师 | 需求主入口：拆解、登记看板、顶层设计、任务路由 |
+| `codex`（Codex） | 副总架构师 + 主力开发 | review 方案（V1→V2）、高难度核心代码、review trae 产出 |
+| `trae`（Trae CN） | 代码构建师 | 常规业务逻辑、UI 的落地与本地调测 |
+
+没有固定工作流：路径由任务性质和人类临场决定。人类是唯一调度器和最高仲裁者，**人类直接手改的任何黑板文件都是最新事实，绝对服从，不质疑历史**。
+
+## 2. 黑板结构
+
+```
+.agent_workspace/          ← 协作系统全部文件的唯一落点,不污染项目目录
+├── state.json     全局看板:锁(防呆) / agents / 任务索引与状态
+├── bb.py          黑板操作脚本 —— 状态变更的唯一写入通道
+├── BLACKBOARD.md  本文件(约定母本)
+├── board.html     人类监控看板(Chrome/Edge 双击打开)
+├── roles/         三份自举配置(claude.md / codex.md / trae.md)
+├── tasks/         任务书,每任务一个 md(正文人和 Agent 直接编辑)
+└── inbox/         定向邮箱,每留言一个 md
+    ├── claude/  ├── codex/  └── trae/
+```
+
+项目根目录的 `CLAUDE.md` / `AGENTS.md` / `.trae/rules/project_rules.md` 只含**一行引用**指向 `roles/` 对应文件——协作系统对项目约定文件的侵入压缩到最小。
+
+**任务状态机**：`pending`（待领取）→ `working`（进行中）→ `done`（完成）/ `rework`（驳回返工）/ `blocked`（重试超限挂起，只有人类能处置）。
+
+## 3. 铁律：状态写操作必须走 bb.py
+
+**禁止直接编辑 `state.json`**（人类不受此限）。一切状态变更调用：
+
+```
+python3 .agent_workspace/bb.py <子命令> [参数]
+```
+
+| 子命令 | 用途 |
+|---|---|
+| `status --agent <me>` | 看板摘要：锁 / 我的待办 / 我的未读留言。**启动第一步必须执行** |
+| `claim <task_id> --agent <me>` | 领任务：校验指派与重试上限，占锁，置 working |
+| `done <task_id> --agent <me>` | 完成：置 done，释放锁 |
+| `set-status <task_id> <status> --agent <me>` | 状态互换；置 rework 自动计数，满 3 次自动转 blocked；任务离开 working 时自动释放执行者的锁 |
+| `reassign <task_id> --to <agent> --agent <me>` | 转派任务 |
+| `add-task --title <t> --assign <agent> [--type <ty>] [--id <id>] --agent <me>` | 登记新任务并生成任务书（任务要求正文走 stdin 或 `--desc`） |
+| `send --from <me> --to <agent> --title <t>` | 定向留言（正文走 stdin 或 `--body`） |
+| `mark-read [文件名… \| --all] --agent <me>` | 标记收件箱留言为已读 |
+| `unlock --agent <me>` | 释放自己持有的锁（强制解锁 `--force` 仅供人类） |
+| `validate` | 黑板体检：结构 / 状态机 / 文件完整性 |
+
+脚本内置保障：原子写入（不会产生半截 JSON）、真实时间戳、指派与状态机校验、retry 计数与自动挂起。**脚本报错时按提示纠正，不要绕过它手改文件。**
+
+Markdown 正文（任务书要求 / 验收标准 / 执行记录、留言内容）是内容创作，**直接编辑对应 md 文件**。
+
+## 4. 启动自举流程（每次被人类启动时依次执行）
+
+1. **看板**：`python3 .agent_workspace/bb.py status --agent <me>`。
+2. **锁防呆**：若输出警告"锁由他人持有"，停下向人类确认，由人类决定（等待对方收尾 / 人类 `unlock --force`）。
+3. **收件箱**：逐条阅读未读留言（`inbox/<me>/` 下的 md），处理后 `mark-read`。
+4. **结合人类输入行动**：
+   - 固定口令 **`领取任务`** 或 **`go`** → 对我的每个待办：`claim` → 读任务书 → 干活 → 补写任务书「执行记录」→ `done`；
+   - 自然语言（新需求 / "继续" / 任意指示）→ 先完成 1–3 步获取上下文，再结合人类的话行动。新需求优先由 claude 拆解登记（`add-task`）；其他 Agent 也可直接办或登记转派。
+5. **收尾**（每次干完活）：任务书写执行记录 → 需要 review/交接则 `send` 留言 → 确认锁已释放 → 向人类口头汇报结果，并**建议下一步由谁接手**。
+
+## 5. 协作规则
+
+- **边界**：只做任务书写明的事。执行任务时不越权改架构、不顺手重构无关代码；对方案有异议，写进任务书或 `send` 留言，而不是自作主张。
+- **review 驳回**：审查者 `set-status <tid> rework` 并**必须**把驳回原因写进任务书、`send` 通知执行者。
+- **blocked**：任何任务达到 3 次驳回自动挂起。看到 blocked 任务不要碰，等人类裁决。
+- **诚实汇报**：测试失败就说失败并贴输出；没做的步骤明说；不确定就标注不确定。
+- **人类干预**：人类可能随时手改黑板任何文件、用 board.html 看板操作。以文件现状为准。
