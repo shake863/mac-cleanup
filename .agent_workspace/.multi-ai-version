@@ -1,0 +1,11 @@
+# multi-ai 系统文件来源指纹（升级检查用，勿手改）
+# 生成于: 2026-08-14T04:23:39Z
+# 母本: market-zd/plugins/zd-multi-ai/skills/multi-ai/assets
+# 用法: 与母本当前 sha256 比对，不一致说明副本已过期，重新复制即可。
+
+68dc70ee80bc26be36d65e43ab04a247f2df8f6d81733ace1a271ed013c38b78  ~/github/market-zd/plugins/zd-multi-ai/skills/multi-ai/assets/bb.py
+f9fc8a6865875e606b802bfe5f6bbf31a071577dc0871a25b60557cb40545a8e  ~/github/market-zd/plugins/zd-multi-ai/skills/multi-ai/assets/BLACKBOARD.md
+d08cb14fb17449f7cfb6bfbb13b5e70fa61d72690490f30bfa8d1dd5aba0193f  ~/github/market-zd/plugins/zd-multi-ai/skills/multi-ai/assets/board.html
+3852e70b4cdf6172f5b8f736665121a8a33401250119f7ad5133a54dcfe6d478  ~/github/market-zd/plugins/zd-multi-ai/skills/multi-ai/assets/roles/claude.md
+2cbc3ec35a1ac7a5b34aff0bab776f453f74325da63f78ae30902211f8cdb4f3  ~/github/market-zd/plugins/zd-multi-ai/skills/multi-ai/assets/roles/codex.md
+afdaa3416a95aa890a97efe0e1718d2b80f138cd27b64d91a718694777402439  ~/github/market-zd/plugins/zd-multi-ai/skills/multi-ai/assets/roles/trae.md
