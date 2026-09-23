@@ -32,7 +32,10 @@
     {"id": "tencent-meeting-logs", "title": "腾讯会议日志", "tips": "运行日志,可再生", "risk": "recommend", "strategy": "empty-dir", "paths": ["~/Library/Containers/com.tencent.meeting/Data/Library/Global/Logs"]},
     {"id": "teams-caches", "title": "Microsoft Teams 缓存", "tips": "清后 Teams 重置缓存,可修复性能问题", "risk": "recommend", "strategy": "delete", "paths": ["~/Library/Application Support/Microsoft/Teams/IndexedDB", "~/Library/Application Support/Microsoft/Teams/Cache", "~/Library/Application Support/Microsoft/Teams/Application Cache", "~/Library/Application Support/Microsoft/Teams/Code Cache", "~/Library/Application Support/Microsoft/Teams/blob_storage", "~/Library/Application Support/Microsoft/Teams/databases", "~/Library/Application Support/Microsoft/Teams/gpucache", "~/Library/Application Support/Microsoft/Teams/Local Storage", "~/Library/Application Support/Microsoft/Teams/tmp", "~/Library/Application Support/Microsoft/Teams/*logs*.txt", "~/Library/Application Support/Microsoft/Teams/watchdog", "~/Library/Application Support/Microsoft/Teams/*watchdog*.json"]},
     {"id": "java-heap-dumps", "title": "Java 堆转储", "tips": "~ 根下的 .hprof 文件", "risk": "recommend", "strategy": "delete", "depth": 1, "match": "*.hprof", "paths": ["~"]},
-    {"id": "pyenv-venv-cache", "title": "Pyenv-VirtualEnv 缓存", "tips": "环境变量存在才生效", "risk": "recommend", "strategy": "delete", "paths": ["$PYENV_VIRTUALENV_CACHE_PATH"]}
+    {"id": "pyenv-venv-cache", "title": "Pyenv-VirtualEnv 缓存", "tips": "环境变量存在才生效", "risk": "recommend", "strategy": "delete", "paths": ["$PYENV_VIRTUALENV_CACHE_PATH"]},
+    {"id": "virtualenv-app-data", "title": "virtualenv app-data", "tips": "virtualenv 为各 Python 版本缓存的 seed wheel,不在 Caches 下故 user-caches 扫不到;按需重建", "risk": "recommend", "strategy": "empty-dir", "paths": ["~/Library/Application Support/virtualenv"]},
+    {"id": "xdg-pip-cache", "title": "pip 缓存(XDG 位置)", "tips": "设了 XDG_CACHE_HOME 或来自 Linux 习惯的 pip 下载缓存;macOS 默认位置 ~/Library/Caches/pip 已由 user-caches 覆盖", "risk": "recommend", "strategy": "empty-dir", "paths": ["~/.cache/pip"]},
+    {"id": "huggingface-cache", "title": "Hugging Face 模型/数据集缓存", "tips": "可重新下载但体积大、耗时,常有多年前试验遗留;确认不再用哪些模型再清", "risk": "caution", "strategy": "empty-dir", "paths": ["~/.cache/huggingface"]}
   ],
   "command_rules": [
     {"id": "brew", "title": "Homebrew 清理", "tips": "brew cleanup -s 清缓存与旧版本", "command": ["brew", "cleanup", "-s"], "guard": "brew", "dry_paths": ["~/Library/Caches/Homebrew"]},
@@ -45,7 +48,8 @@
     {"id": "go", "title": "Go module 缓存清理", "tips": "go clean -modcache", "command": ["go", "clean", "-modcache"], "guard": "go", "dry_paths": ["~/go/pkg/mod"]},
     {"id": "conda", "title": "conda 缓存清理", "tips": "conda clean --all", "command": ["conda", "clean", "--all", "--yes"], "guard": "conda"},
     {"id": "composer", "title": "composer 缓存清理", "tips": "composer clear-cache", "command": ["composer", "clear-cache"], "guard": "composer", "dry_paths": ["~/Library/Caches/composer"]},
-    {"id": "simctl", "title": "不可用模拟器清理", "tips": "xcrun simctl delete unavailable", "command": ["xcrun", "simctl", "delete", "unavailable"], "guard": "xcrun"}
+    {"id": "simctl", "title": "不可用模拟器清理", "tips": "xcrun simctl delete unavailable", "command": ["xcrun", "simctl", "delete", "unavailable"], "guard": "xcrun"},
+    {"id": "uv", "title": "uv 缓存清理", "tips": "uv cache prune 只清无引用条目;macOS 上 venv 默认 clone 自缓存,清缓存不影响已建 venv", "command": ["uv", "cache", "prune"], "guard": "uv", "dry_paths": ["~/.cache/uv"]}
   ],
   "aliases": {
     "com.youdao.note.YoudaoNoteMac": ["com.youdao.YoudaoDict"],
