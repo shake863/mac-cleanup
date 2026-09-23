@@ -138,6 +138,8 @@ lemon 的 `recommend="NO"` ≈ 我们的 `risk=caution`(数据不可再生或需
 
 lemon 的 `path type="special" value="SystemTempDir" value1="<bundleid>"` 指向 **`/private/var/folders/<xx>/<hash>/C/<bundleid>`**(darwin per-user cache 目录,`getconf DARWIN_USER_CACHE_DIR` 可得)。每个 app 在这里还有一份缓存,常规 `~/Library/Caches` 扫描覆盖不到——**我们 v2 扫描来源的又一个盲区,已补入规格**。
 
+> 2026-09-23 更新:clean-zd 已**不再扫描**此目录。它解析到 `/private/var/folders`,在 `$HOME` 之外,引擎安全边界(只清 `$HOME` 内)不允许登记与清理,扫出来只是每次都在、永远处理不了的噪音;且 macOS 会自行回收该目录。详见 `docs/dev-log/2026-09-23-drop-darwin-user-cache-scan.md`。
+
 ### 4.2 卸载残留匹配(LemonUninstaller)
 
 - 应用身份:`Info.plist` 的 bundleID(`kCFBundleIdentifierKey`)+ appName(`kCFBundleNameKey`,缺省用文件名)+ executableName + 显示名;

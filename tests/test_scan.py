@@ -51,6 +51,21 @@ class CacheScannerTest(unittest.TestCase):
         self.assertEqual(out[0].category, "cache")
         self.assertEqual(out[0].suggested_strategy, "empty-dir")
 
+    def test_scan_skips_darwin_user_cache_dir(self):
+        # DARWIN_USER_CACHE_DIR 解析到 /private/var/folders,在 $HOME 之外,
+        # manifest add 必然拒绝;扫描产出这类候选只会成为每次都在的噪音。
+        from cleanzd.scan import cache
+        home = Path(tempfile.mkdtemp())
+        dud = Path(tempfile.mkdtemp())
+        blob_dir = dud / "com.example.app"
+        blob_dir.mkdir()
+        (blob_dir / "blob").write_bytes(b"x" * (2 * 1024 * 1024))
+        fake = mock.Mock(stdout=str(dud) + "\n")
+        with mock.patch.dict(os.environ, {"HOME": str(home)}), \
+                mock.patch("subprocess.run", return_value=fake):
+            out = cache.scan()
+        self.assertFalse([c for c in out if c.path.startswith(str(dud))])
+
 class BigfileScannerTest(unittest.TestCase):
     def test_threshold(self):
         from cleanzd.scan import bigfile

@@ -10,4 +10,5 @@
 - 修复上游遗留的硬编码模拟器路径（`/Users/wah/...` → `~/`）。
 - 修复体积统计：改按物理占用（`st_blocks * 512`，与 `du` 同口径），稀疏文件（如 Docker.raw 虚拟磁盘）不再按逻辑大小虚高。
 - 修复体积统计：目录遍历对硬链接按 `(st_dev, st_ino)` 去重只计一次（与 `du` 同口径），conda 等硬链接共享包文件的目录不再虚高（`~/anaconda3` 由 16GB 修正为 11GB）。
+- 缓存扫描不再产出 `DARWIN_USER_CACHE_DIR`(`/private/var/folders/.../C`)候选：该目录在 `$HOME` 外、清单拒绝登记，只会成为噪音；macOS 自行回收。
 - 移除原作者专属的发推与 opencollective 内容。

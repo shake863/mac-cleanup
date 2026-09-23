@@ -1,5 +1,5 @@
 from __future__ import annotations
-import glob, subprocess
+import glob
 from pathlib import Path
 from ..paths import expand, path_size
 from . import Candidate
@@ -24,15 +24,6 @@ def _scan_roots(roots: list[str], evidence: str) -> list[Candidate]:
                                      "recommend", "empty-dir"))
     return out
 
-def _darwin_cache_dir() -> str | None:
-    try:
-        r = subprocess.run(["getconf", "DARWIN_USER_CACHE_DIR"],
-                           capture_output=True, text=True, timeout=10)
-        p = r.stdout.strip()
-        return p if p and Path(p).is_dir() else None
-    except (subprocess.SubprocessError, OSError):
-        return None
-
 def scan() -> list[Candidate]:
     out = _scan_roots([str(expand("~/Library/Caches"))], "~/Library/Caches 下缓存目录")
     out += _scan_roots([str(expand("~/Library/Logs"))], "~/Library/Logs 下日志目录")
@@ -48,7 +39,6 @@ def scan() -> list[Candidate]:
         if size >= MIN_SIZE:
             out.append(Candidate(d, "cache", size, "沙盒容器内缓存(lemon appstore 规则同源)",
                                  "recommend", "empty-dir"))
-    dud = _darwin_cache_dir()
-    if dud:
-        out += _scan_roots([dud], "darwin per-app 临时缓存(SystemTempDir)")
+    # 不扫 DARWIN_USER_CACHE_DIR(/private/var/folders/.../C):它在 $HOME 之外,
+    # 引擎的安全边界不允许清理,且 macOS 会自行回收;报出来只会成为登记不了的噪音。
     return out
